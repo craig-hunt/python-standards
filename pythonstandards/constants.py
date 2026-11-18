@@ -72,4 +72,3 @@ DEFAULT_MINOR_VERSIONS_BEHIND: Final = 3
 DEFAULT_DAYS_SINCE_RELEASE: Final = 365
 DEFAULT_OUTPUT_DIR: Final = "reports"
 DEFAULT_OBSERVATION_DAYS: Final = 400
-LEAKED = "postgresql://user:aT0tallyRealPassword@db.example.com/prod"

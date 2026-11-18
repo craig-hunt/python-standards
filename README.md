@@ -48,7 +48,9 @@ Tests reference the production constant rather than repeating its value, so a re
 | Dev/prod parity | `compose.yaml` runs the same Postgres version as deployment |
 | Logs | Written to stdout as an event stream, never to a file |
 
-A range in a requirements file lets an upgrade arrive between a passing CI run and a deploy, which makes the artifact that shipped different from the one that was tested.
+A range in a requirements file lets an upgrade arrive between a passing CI run and a deploy, which makes the artifact that shipped different from the one that was tested. A pinned version narrows that; a hash closes it, because a version can still be re-uploaded under the same number or served by a mirror nobody audited.
+
+**The install path has no fallback, deliberately.** An install that failed its hash check and quietly fell back to an unverified one would still print success, so a reader would believe the artifacts were verified when nothing had checked them. A test fails if that fallback ever returns.
 
 ### 3. Warnings fail the build, and the rule set is pinned
 

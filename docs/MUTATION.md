@@ -12,7 +12,12 @@
 | Timed out | 0 | counted apart from kills, never as kills |
 | Skipped | 13 | |
 
-**The gate passes**: 74.7% against a 70% floor, over 208 tests.
+**The gate passes**: 74.7% against a 70% floor, over 211 tests.
+
+The three tests added after the first measurement assert properties of the
+repository rather than of the code, so they skip inside a mutation workspace
+and the score is unchanged at 668 of 894. Recorded because a figure whose test
+count no longer matches is a figure nobody can reproduce.
 
 ### How it got there, recorded because the method matters
 

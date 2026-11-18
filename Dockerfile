@@ -14,12 +14,14 @@ WORKDIR /app
 
 # Dependencies first and separately, so a change to the source does not
 # invalidate the layer that took the time to build.
-COPY requirements.txt ./
-RUN pip install --no-cache-dir --require-hashes --no-deps -r requirements.txt 2>/dev/null \
- || pip install --no-cache-dir -r requirements.txt
+# The lock rather than requirements.txt, and with no fallback. An image that
+# quietly installed unverified artifacts while reporting success is worse than
+# one that fails to build.
+COPY requirements.lock ./
+RUN pip install --no-cache-dir --require-hashes --no-deps -r requirements.lock
 
 COPY pythonstandards/ ./pythonstandards/
-COPY config.yaml requirements.txt ./
+COPY config.yaml requirements.txt requirements.lock ./
 COPY sql/ ./sql/
 
 USER agent

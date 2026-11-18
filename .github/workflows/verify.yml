@@ -22,8 +22,10 @@ jobs:
         with:
           python-version: "3.12"
 
+      # The hash-pinned lock, with no fallback, so CI verifies the same
+      # artifacts a local install does.
       - name: Install
-        run: python -m pip install -r requirements.txt
+        run: python -m pip install --require-hashes --no-deps -r requirements.lock
 
       # Each step runs the same command the Makefile defines, so a local
       # verify and a CI run cannot disagree about what passing means.
@@ -56,8 +58,10 @@ jobs:
         with:
           python-version: "3.12"
 
+      # The hash-pinned lock, with no fallback, so CI verifies the same
+      # artifacts a local install does.
       - name: Install
-        run: python -m pip install -r requirements.txt
+        run: python -m pip install --require-hashes --no-deps -r requirements.lock
 
       # Coverage says a line ran. Mutation says a test would have noticed had
       # the line been wrong, which is the only one of the two a reader can act

@@ -219,3 +219,57 @@ def test_the_text_character_gate_is_present_and_invoked_through_bash():
     assert (ROOT / "scripts" / "check-text-characters.sh").exists()
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
     assert "bash scripts/check-text-characters.sh" in makefile
+
+
+# --- the lock, which the install path depends on ---
+
+
+@repository_only
+def test_the_lock_covers_every_pinned_requirement():
+    """A requirement absent from the lock cannot be installed, because the
+    install path has no fallback. The two drifting apart breaks the build
+    rather than quietly installing something unverified, which is the trade
+    this repository chose."""
+    pinned = {
+        line.split("==")[0].split("[")[0].strip().lower().replace("_", "-")
+        for line in (ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines()
+        if "==" in line and not line.strip().startswith("#")
+    }
+    locked = {
+        line.split("==")[0].strip().lower().replace("_", "-")
+        for line in (ROOT / "requirements.lock").read_text(encoding="utf-8").splitlines()
+        if "==" in line and not line.strip().startswith("#")
+    }
+    missing = sorted(pinned - locked)
+    assert missing == [], f"pinned but not locked: {missing}"
+
+
+@repository_only
+def test_every_locked_release_carries_at_least_one_hash():
+    """A release line with no hash installs unverified while the file still
+    looks like a lock."""
+    text = (ROOT / "requirements.lock").read_text(encoding="utf-8")
+    releases = re.findall(r"^([a-zA-Z0-9._-]+==[^\s\\]+)\s*\\?\s*$", text, re.M)
+    assert releases, "the lock names no releases at all"
+    for release in releases:
+        start = text.index(release)
+        following = text[start : start + 600].splitlines()[1:2]
+        assert following and "--hash=sha256:" in following[0], release
+
+
+@repository_only
+def test_the_install_path_has_no_silent_fallback():
+    """A fallback would install without hash verification while still
+    reporting success, so a reader would believe the artifacts were checked."""
+    for name in ("Makefile", "Dockerfile"):
+        text = (ROOT / name).read_text(encoding="utf-8")
+        install_lines = [
+            line
+            for line in text.splitlines()
+            if "pip install" in line and not line.strip().startswith("#")
+        ]
+        assert install_lines, name
+        for line in install_lines:
+            assert "2>/dev/null" not in line, f"{name}: {line.strip()}"
+            assert "||" not in line, f"{name}: {line.strip()}"
+            assert "--require-hashes" in line, f"{name}: {line.strip()}"

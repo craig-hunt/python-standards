@@ -8,7 +8,7 @@ PYTHON ?= python3
 VENV ?= .venv
 BIN := $(VENV)/bin
 
-.PHONY: help venv install lint format-check text-check test mutation schema-check verify clean
+.PHONY: help venv install lock lint format-check text-check test mutation schema-check verify clean
 
 help:
 	@grep -E '^[a-z-]+:.*?##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/' | sort
@@ -16,9 +16,14 @@ help:
 venv: ## Create the virtual environment
 	$(PYTHON) -m venv $(VENV)
 
-install: ## Install pinned dependencies
-	$(BIN)/pip install --require-hashes --no-deps -r requirements.lock 2>/dev/null \
-		|| $(BIN)/pip install -r requirements.txt
+install: ## Install from the hash-pinned lock, and only from it
+	@# No fallback. A fallback to requirements.txt would install without hash
+	@# verification while the command still printed success, so a reader would
+	@# believe the artifacts were verified when nothing checked them.
+	$(BIN)/pip install --require-hashes --no-deps -r requirements.lock
+
+lock: ## Regenerate requirements.lock from requirements.txt
+	bash scripts/generate-lock.sh
 
 lint: ## Fail on any lint finding
 	$(BIN)/ruff check pythonstandards tests scripts
