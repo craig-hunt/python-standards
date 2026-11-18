@@ -1,0 +1,45 @@
+# Settings a reader might reasonably change, separated from the code that
+# reads them. A threshold inside a comparison cannot be adjusted without a
+# deploy, and cannot be seen at all without reading the function. See
+# standard 1.
+
+registry:
+  # The index this monitor asks about a package. Public, and no credential.
+  base_url: https://pypi.org/pypi
+  # Requests per second the monitor will not exceed. A public index owes
+  # nobody a quota, so the monitor paces itself rather than discovering the
+  # limit by hitting it.
+  delay_between_requests_s: 0.25
+  # Per-request timeouts. Split rather than a single number, because one value
+  # bounds each operation separately and a host that trickles bytes can hold a
+  # read open indefinitely under a per-read timeout alone.
+  request_timeout_seconds: 10
+  request_deadline_seconds: 30
+  # A real index payload for a package with many releases exceeded 2 MB and
+  # was cut mid-JSON, which the agent then reported as a malformed response.
+  # The cap exists to bound memory, so it stays, set above what the largest
+  # observed payload needs.
+  max_response_bytes: 12000000
+
+freshness:
+  # A pin this many major versions behind earns a high finding, because a
+  # major bump is where the breaking changes live.
+  major_versions_behind: 1
+  # Minor versions behind before it is worth mentioning at all. One minor
+  # release behind is ordinary and reporting it would train the reader to
+  # ignore the report.
+  minor_versions_behind: 3
+  # Days since the installed version was published, past which the pin is
+  # stale regardless of how many releases have followed.
+  days_since_release: 365
+
+reporting:
+  output_dir: reports
+  site_name: Python Standards reference agent
+
+retention:
+  enabled: true
+  # Findings and runs stay: both are small, and they hold the history that
+  # makes a trend visible. Observations expire, because a year of them answers
+  # every question anybody asks of them.
+  observation_days: 400

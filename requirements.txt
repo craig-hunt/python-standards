@@ -1,0 +1,16 @@
+# Every dependency pins an exact version. A range lets an upgrade arrive
+# between a passing CI run and a deploy, which makes the artifact that shipped
+# different from the one that was tested. See standard 2.
+httpx==0.28.1
+psycopg[binary]==3.2.3
+pydantic==2.14.3
+PyYAML==6.0.2
+Jinja2==3.1.6
+packaging==24.2
+
+# Development and CI only. Kept here rather than in a second file because one
+# pinned list cannot disagree with itself about a shared transitive dependency.
+pytest==8.3.4
+pytest-asyncio==0.25.0
+ruff==0.16.7
+mutmut==3.8

@@ -1,0 +1,67 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: lint, format, text, tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: python -m pip install -r requirements.txt
+
+      # Each step runs the same command the Makefile defines, so a local
+      # verify and a CI run cannot disagree about what passing means.
+      - name: Lint
+        run: ruff check pythonstandards tests scripts
+
+      - name: Format
+        run: ruff format --check pythonstandards tests scripts
+
+      - name: Text characters
+        run: bash scripts/check-text-characters.sh .
+
+      - name: Schema is current
+        run: |
+          python scripts/generate_schema_alters.py
+          git diff --exit-code sql/create_tables.sql
+
+      - name: Tests
+        run: python -m pytest
+
+  mutation:
+    name: mutation gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: python -m pip install -r requirements.txt
+
+      # Coverage says a line ran. Mutation says a test would have noticed had
+      # the line been wrong, which is the only one of the two a reader can act
+      # on. The gate reads killed apart from timed-out, because a timeout is
+      # not a kill and counting it as one inflates the score.
+      - name: Mutation gate
+        run: bash scripts/mutation-gate.sh

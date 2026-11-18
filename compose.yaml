@@ -1,0 +1,29 @@
+# The same Postgres major version the deployment runs, so a statement that
+# works here works there. Dev and prod parity is the whole reason this file
+# pins a digest rather than naming a tag: a tag moves, and a tag that moved
+# between a passing test and a deploy makes the two different databases.
+#
+# Verified by pulling the image and reading its digest, not written from
+# memory. A digest nobody checked is worse than a tag, because it looks
+# precise while pinning nothing that exists.
+
+services:
+  postgres:
+    image: postgres:16-alpine@sha256:81e77a4833487b8132fe4b00bedd39dc3f74b8641e387f19312a48f7de218c2e
+    environment:
+      POSTGRES_PASSWORD: local-only-not-a-real-password
+      POSTGRES_DB: pythonstandards
+    ports:
+      - "5433:5432"
+    healthcheck:
+      # The agent's first statement fails confusingly against a server that is
+      # listening but not ready, so compose waits for readiness rather than
+      # for the port.
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    tmpfs:
+      # Nothing here outlives the container. A local database that survives a
+      # restart accumulates state that makes a test pass for the wrong reason.
+      - /var/lib/postgresql/data

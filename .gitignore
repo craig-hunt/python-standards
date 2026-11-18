@@ -1,0 +1,25 @@
+# Byte code and build output
+__pycache__/
+*.py[cod]
+/build/
+/dist/
+*.egg-info/
+
+# Virtual environments live outside the repository on this machine, under
+# ~/<project>-venv, because WSL's bridge to NTFS makes an in-tree venv slow
+# enough to notice on every install.
+/.venv/
+
+# Environment files stay outside the repository; see standard 7 in the README
+.env
+*.env
+
+# Mutation testing copies the package into mutants/ for each run
+/mutants/
+
+# Generated output the agent writes at run time
+/reports/
+/htmlcov/
+.coverage
+.pytest_cache/
+.ruff_cache/

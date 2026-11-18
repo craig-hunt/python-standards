@@ -1,0 +1,52 @@
+# The rule set is pinned explicitly rather than inherited from a preset.
+#
+# A preset such as "ALL" or a bare default changes with every ruff release, so
+# an upgrade can add a rule nobody chose and fail a build that passed an hour
+# earlier, or retire one and stop enforcing something the README still claims.
+# Naming each family means the README and the linter cannot drift apart
+# without somebody editing this file.
+#
+# See standard 3 in the README.
+
+target-version = "py312"
+line-length = 100
+
+[lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes: undefined names, unused imports, unused variables
+    "I",    # import ordering
+    "B",    # bugbear: mutable defaults, assert on a tuple, unused loop control
+    "C4",   # comprehension rewrites
+    "UP",   # constructs superseded by a newer Python
+    "SIM",  # simplifiable branches and comparisons
+    "RET",  # return-path consistency
+    "ARG",  # unused arguments, which usually mean a signature drifted
+    "PTH",  # os.path calls that pathlib expresses better
+    "RUF",  # ruff's own rules, including mutable class defaults
+    "S",    # bandit: shell injection, weak hashes, assert in production code
+    "DTZ",  # naive datetimes, which land in a timestamptz as if they were UTC
+    "T20",  # print, which bypasses the log configuration
+]
+
+# Nothing is ignored globally. An exception earns its place in per-file-ignores
+# below, where the reason stays attached to the files it covers.
+ignore = []
+
+[lint.per-file-ignores]
+# Tests assert, and bandit's S101 exists for production code where an assert
+# disappears under -O. Tests also carry fixture data that looks like a secret
+# to S105 and S106 and is not one.
+# ARG: a test double's signature is dictated by the thing it stands in for.
+# A MockTransport handler must accept `request` whether or not it reads it,
+# and a monkeypatched method must accept `self`. Dropping the parameter breaks
+# the call; renaming it to `_request` hides which interface it satisfies. ARG
+# stays on for the package, where an unused argument means a signature drifted.
+"tests/**" = ["S101", "S105", "S106", "ARG001", "ARG002", "ARG005"]
+# A script writes to the operator's terminal, which is the whole point of it,
+# so print is correct there and a logger would be ceremony.
+"scripts/**" = ["T20"]
+
+[lint.isort]
+known-first-party = ["pythonstandards"]

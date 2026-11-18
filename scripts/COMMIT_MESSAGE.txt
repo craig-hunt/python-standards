@@ -1,0 +1,63 @@
+add python-standards, a reference agent for the Python conventions
+
+Ten standards repositories cover Blazor, C#, Go, Java, Rust, React and
+four browser-test suites. None covered Python, while every agent in
+the suite is written in it, so each new agent argued its conformance
+from standards written for other languages.
+
+The reference is an agent rather than a service, which breaks parity
+with the four backend repositories on purpose. Those implement one
+shared JSON API so a reader can compare a rule across languages. The
+conventions this repository exists to carry are about the exit code a
+scheduler reads, secrets that never touch the tree, limits on what a
+stranger's host can send, and layers that stay separate under
+pressure. A tasks API demonstrates none of them. ADR-0001 records the
+decision, its cost and the three alternatives rejected.
+
+The agent audits this repository's own pinned dependencies: it asks a
+package index what the current version of each is, decides which have
+fallen behind, persists what it found with a lifecycle, and reports a
+digest. Auditing itself keeps the example honest, because a standard
+it fails shows up in its own report. Run live against the index it
+found six true findings about these pins, two of them a major version
+behind.
+
+Fourteen numbered standards, each carrying its reasoning rather than
+the rule alone, and each mapped in docs/CONFORMANCE.md to the thing
+that enforces it. A test parses every module and fails on a number
+compared against directly or an environment variable named by a
+literal. Another parses each layer's imports and fails when one
+reaches past itself. A third fails on any credential-shaped string in
+the tree. The schema script generates its own ALTER block from its
+CREATE TABLE statements and ends with a gate that names any column it
+cannot add, because hand-maintaining that list already failed on a
+sibling project.
+
+Two lint suppressions exist, both inline and both carrying their
+reason: a constant holding an environment variable NAME reads as a
+hardcoded password, and Jinja autoescape would HTML-escape a Markdown
+document and corrupt it. Nothing is ignored globally.
+
+Building it surfaced three defects in the agent itself, each fixed.
+A response cap truncated a real index payload mid-JSON and the agent
+reported that as a malformed response, blaming the index for its own
+cut; it now says it truncated and the cap sits above the largest
+observed payload. Treating warnings as errors surfaced an unset
+pytest-asyncio option that would have changed behavior silently in a
+later release. And the convention tests, which scan the filesystem,
+read the mutation tool's deliberately wrong variants and failed the
+whole mutation run during stats collection; they assert properties of
+the repository, so they skip inside a mutation workspace.
+
+Mutation measures 74.7%, 668 killed of 894 with timeouts counted
+apart, against the 70% floor this repository declares. The first
+measurement was 65.4%, below its own floor, and docs/MUTATION.md
+records that rather than hiding it: the gap closed through 36 further
+tests and exactly one new exclusion pattern, for lines that are only a
+string literal, which is how a multi-line message continuation looks
+and nothing else does. What still survives is named there as
+equivalent mutants rather than untested behavior.
+
+208 tests, lint and format clean, and the text-character gate clean
+across 76 files. SQL remains without a standards repository, named in
+docs/CONFORMANCE.md rather than left to be discovered.
